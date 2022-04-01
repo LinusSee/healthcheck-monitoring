@@ -37,3 +37,7 @@ The frontend retrieves healthcheck data from the backend, parses it and displays
 ```
 
 The backend polls several healthchecks and saved the response as it is.
+
+
+## Notes
+- How to handle it if a healthcheck could not be reached?
