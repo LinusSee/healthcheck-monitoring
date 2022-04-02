@@ -1,7 +1,9 @@
 module Main exposing (..)
 
 import Browser
-import Html exposing (text)
+import Html exposing (div, text)
+import Http
+import Models.HealthcheckData as HealthcheckData
 
 
 
@@ -19,15 +21,30 @@ main =
 
 init : () -> ( RootModel, Cmd Msg )
 init _ =
-    ( { healthcheckData = [] }, Cmd.none )
+    ( { healthcheckData = []
+      , httpStatus = Loading
+      }
+    , Http.get
+        { url = "http://localhost:3000/mock-monitoring-backend/api/v1/healthchecks/355c722a-4f1c-42fb-a9a3-4fb11f5a0508/data"
+        , expect = Http.expectJson GotTaskHealthcheckData HealthcheckData.healthcheckDataResponseDecoder
+        }
+    )
 
 
 type alias RootModel =
-    { healthcheckData : List String }
+    { healthcheckData : List HealthcheckData.HealthcheckRoot
+    , httpStatus : HttpStatus
+    }
+
+
+type HttpStatus
+    = Success
+    | Loading
+    | Error Http.Error
 
 
 type Msg
-    = None
+    = GotTaskHealthcheckData (Result Http.Error (List HealthcheckData.HealthcheckRoot))
 
 
 subscriptions : RootModel -> Sub Msg
@@ -40,8 +57,13 @@ subscriptions rootModel =
 
 
 update : Msg -> RootModel -> ( RootModel, Cmd Msg )
-update _ rootModel =
-    ( rootModel, Cmd.none )
+update (GotTaskHealthcheckData result) rootModel =
+    case result of
+        Ok healthcheckRoots ->
+            ( { rootModel | healthcheckData = healthcheckRoots }, Cmd.none )
+
+        Err error ->
+            ( { rootModel | httpStatus = Error error }, Cmd.none )
 
 
 
@@ -49,5 +71,39 @@ update _ rootModel =
 
 
 view : RootModel -> Html.Html Msg
-view _ =
-    text "Hello World!"
+view rootModel =
+    case List.head rootModel.healthcheckData of
+        Just healthcheckRoot ->
+            div [] [ text (Debug.toString healthcheckRoot) ]
+
+        Nothing ->
+            div []
+                [ text "Hello World!"
+                , text (httpStatusAsString rootModel.httpStatus)
+                ]
+
+
+healthcheckOutcomeAsString : HealthcheckData.HealthcheckOutcome -> String
+healthcheckOutcomeAsString outcome =
+    case outcome of
+        HealthcheckData.UP ->
+            "UP"
+
+        HealthcheckData.DOWN ->
+            "DOWN"
+
+        HealthcheckData.UNKNOWN state ->
+            "Unbekanntes Ergebnis: " ++ state
+
+
+httpStatusAsString : HttpStatus -> String
+httpStatusAsString status =
+    case status of
+        Success ->
+            "Success"
+
+        Loading ->
+            "Loading"
+
+        Error httpError ->
+            "Error with message: " ++ Debug.toString httpError
