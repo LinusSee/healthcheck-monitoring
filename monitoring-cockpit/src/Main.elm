@@ -60,7 +60,7 @@ update : Msg -> RootModel -> ( RootModel, Cmd Msg )
 update (GotTaskHealthcheckData result) rootModel =
     case result of
         Ok healthcheckRoots ->
-            ( { rootModel | healthcheckData = healthcheckRoots }, Cmd.none )
+            ( { rootModel | healthcheckData = healthcheckRoots, httpStatus = Success }, Cmd.none )
 
         Err error ->
             ( { rootModel | httpStatus = Error error }, Cmd.none )
@@ -72,15 +72,7 @@ update (GotTaskHealthcheckData result) rootModel =
 
 view : RootModel -> Html.Html Msg
 view rootModel =
-    case List.head rootModel.healthcheckData of
-        Just healthcheckRoot ->
-            div [] [ text (Debug.toString healthcheckRoot) ]
-
-        Nothing ->
-            div []
-                [ text "Hello World!"
-                , text (httpStatusAsString rootModel.httpStatus)
-                ]
+    div [] [ text (Debug.toString rootModel) ]
 
 
 healthcheckOutcomeAsString : HealthcheckData.HealthcheckOutcome -> String
