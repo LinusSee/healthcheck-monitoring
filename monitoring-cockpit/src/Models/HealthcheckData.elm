@@ -4,7 +4,9 @@ module Models.HealthcheckData exposing
     , HealthcheckNode
     , HealthcheckOutcome(..)
     , HealthcheckRoot
+    , extractNumeric
     , healthcheckDataResponseDecoder
+    , isNumericField
     )
 
 import Json.Decode as Decode exposing (Decoder, bool, field, int, string)
@@ -146,3 +148,24 @@ healthcheckNodeDataFieldListDecoder decoders =
 --
 --         BooleanFieldType fieldName ->
 --             Decode.map BooleanField (field fieldName bool)
+-- Functions: Maybe move somewhere else at some point?
+
+
+extractNumeric : HealthcheckField -> Int
+extractNumeric field =
+    case field.value of
+        NumericField val ->
+            val
+
+        _ ->
+            -1
+
+
+isNumericField : HealthcheckField -> Bool
+isNumericField field =
+    case field.value of
+        NumericField _ ->
+            True
+
+        _ ->
+            False
