@@ -26,7 +26,7 @@ main =
 
 init : () -> ( RootModel, Cmd Msg )
 init _ =
-    ( { healthcheckData = []
+    ( { healthcheckData = Dict.empty
       , processedHealthcheckData = Dict.empty
       , httpStatus = Loading
       }
@@ -38,7 +38,7 @@ init _ =
 
 
 type alias RootModel =
-    { healthcheckData : List HealthcheckData.HealthcheckRoot
+    { healthcheckData : Dict String (List HealthcheckData.HealthcheckRoot)
     , processedHealthcheckData : Dict String (List ( Float, Float ))
     , httpStatus : HttpStatus
     }
@@ -86,7 +86,7 @@ update (GotTaskHealthcheckData result) rootModel =
                             []
             in
             ( { rootModel
-                | healthcheckData = healthcheckRoots
+                | healthcheckData = Dict.insert "myKey" healthcheckRoots rootModel.healthcheckData
                 , httpStatus = Success
                 , processedHealthcheckData = Dict.insert "myKey" floatData rootModel.processedHealthcheckData
               }
