@@ -1,0 +1,18 @@
+/*
+  Globals
+*/
+html, body {
+  padding: 0px;
+  margin: 0px;
+}
+
+
+
+/*
+Styles
+*/
+.healthcheck-chart {
+  width: 300px;
+  height: 300px;
+  margin: 50px;
+}

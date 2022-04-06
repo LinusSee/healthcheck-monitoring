@@ -1,5 +1,8 @@
 module Models.HealthcheckData exposing
-    ( HealthcheckOutcome(..)
+    ( HealthcheckField
+    , HealthcheckFieldValue(..)
+    , HealthcheckNode
+    , HealthcheckOutcome(..)
     , HealthcheckRoot
     , healthcheckDataResponseDecoder
     )
@@ -26,7 +29,13 @@ type HealthcheckOutcome
     | UNKNOWN String
 
 
-type HealthcheckField
+type alias HealthcheckField =
+    { fieldname : String
+    , value : HealthcheckFieldValue
+    }
+
+
+type HealthcheckFieldValue
     = StringField String
     | NumericField Int
     | BooleanField Bool
@@ -91,12 +100,12 @@ healthcheckNodeDataDecoder =
         |> Decode.map
             (List.map
                 (\( key, value ) ->
-                    value
+                    HealthcheckField key value
                 )
             )
 
 
-decodeStuff : Decoder HealthcheckField
+decodeStuff : Decoder HealthcheckFieldValue
 decodeStuff =
     Decode.oneOf [ decodeInt, decodeString, decodeBoolean ]
 
@@ -105,17 +114,17 @@ decodeStuff =
 -- Decode.map List.singleton (healthcheckNodeDataFieldDecoder (NumericFieldType "itemCount"))
 
 
-decodeInt : Decoder HealthcheckField
+decodeInt : Decoder HealthcheckFieldValue
 decodeInt =
     Decode.map NumericField int
 
 
-decodeString : Decoder HealthcheckField
+decodeString : Decoder HealthcheckFieldValue
 decodeString =
     Decode.map StringField string
 
 
-decodeBoolean : Decoder HealthcheckField
+decodeBoolean : Decoder HealthcheckFieldValue
 decodeBoolean =
     Decode.map BooleanField bool
 
@@ -125,14 +134,15 @@ healthcheckNodeDataFieldListDecoder decoders =
     Decode.oneOf decoders
 
 
-healthcheckNodeDataFieldDecoder : HealthcheckFieldType -> Decoder HealthcheckField
-healthcheckNodeDataFieldDecoder fieldType =
-    case fieldType of
-        StringFieldType fieldName ->
-            Decode.map StringField (field fieldName string)
 
-        NumericFieldType fieldName ->
-            Decode.map NumericField (field fieldName int)
-
-        BooleanFieldType fieldName ->
-            Decode.map BooleanField (field fieldName bool)
+-- healthcheckNodeDataFieldDecoder : HealthcheckFieldType -> Decoder HealthcheckField
+-- healthcheckNodeDataFieldDecoder fieldType =
+--     case fieldType of
+--         StringFieldType fieldName ->
+--             Decode.map StringField (field fieldName string)
+--
+--         NumericFieldType fieldName ->
+--             Decode.map NumericField (field fieldName int)
+--
+--         BooleanFieldType fieldName ->
+--             Decode.map BooleanField (field fieldName bool)

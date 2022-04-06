@@ -30,7 +30,8 @@ const tasksHealthcheckData =
                           "name": "TaskQueue",
                           "state": "UP",
                           "data": {
-                              "itemCount": 4
+                              "itemCount": 4,
+                              "boolField": true
                           }
                       }
                   ]
@@ -70,7 +71,8 @@ const tasksHealthcheckData =
                           "name": "TaskQueue",
                           "state": "UP",
                           "data": {
-                              "itemCount": 5
+                              "itemCount": 5,
+                              "boolField": true
                           }
                       }
                   ]
@@ -90,7 +92,8 @@ const tasksHealthcheckData =
                           "name": "TaskQueue",
                           "state": "UP",
                           "data": {
-                              "itemCount": 4
+                              "itemCount": 4,
+                              "boolField": true
                           }
                       }
                   ]
@@ -110,7 +113,8 @@ const tasksHealthcheckData =
                           "name": "TaskQueue",
                           "state": "UP",
                           "data": {
-                              "itemCount": 2
+                              "itemCount": 2,
+                              "boolField": false
                           }
                       }
                   ]
