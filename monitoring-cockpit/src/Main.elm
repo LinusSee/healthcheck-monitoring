@@ -4,8 +4,9 @@ import Browser
 import Chart as Chart
 import Chart.Attributes as ChartAttributes
 import Dict exposing (Dict)
-import Html exposing (div, text)
+import Html exposing (button, div, p, text)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Http
 import Models.HealthcheckData as HealthcheckData
 import Svg as Svg
@@ -26,7 +27,9 @@ main =
 
 init : () -> ( RootModel, Cmd Msg )
 init _ =
-    ( { healthcheckData = Dict.empty
+    ( { healthchecks = [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important" } ]
+      , selectedHealthcheckId = Nothing
+      , healthcheckData = Dict.empty
       , processedHealthcheckData = Dict.empty
       , httpStatus = Loading
       }
@@ -38,7 +41,9 @@ init _ =
 
 
 type alias RootModel =
-    { healthcheckData : Dict String (List HealthcheckData.HealthcheckRoot)
+    { healthchecks : List HealthcheckData.Healthcheck
+    , selectedHealthcheckId : Maybe String
+    , healthcheckData : Dict String (List HealthcheckData.HealthcheckRoot)
     , processedHealthcheckData : Dict String (List ( Float, Float ))
     , httpStatus : HttpStatus
     }
@@ -52,6 +57,7 @@ type HttpStatus
 
 type Msg
     = GotTaskHealthcheckData (Result Http.Error (List HealthcheckData.HealthcheckRoot))
+    | HealthcheckListItemSelected String
 
 
 subscriptions : RootModel -> Sub Msg
@@ -64,37 +70,42 @@ subscriptions rootModel =
 
 
 update : Msg -> RootModel -> ( RootModel, Cmd Msg )
-update (GotTaskHealthcheckData result) rootModel =
-    case result of
-        Ok healthcheckRoots ->
-            let
-                maybeChecks =
-                    List.map (\root -> List.head root.checks) healthcheckRoots
+update msg rootModel =
+    case msg of
+        GotTaskHealthcheckData result ->
+            case result of
+                Ok healthcheckRoots ->
+                    let
+                        maybeChecks =
+                            List.map (\root -> List.head root.checks) healthcheckRoots
 
-                checks =
-                    List.map (Maybe.withDefault { name = "default", state = HealthcheckData.UNKNOWN "defaultErr", data = [] }) maybeChecks
+                        checks =
+                            List.map (Maybe.withDefault { name = "default", state = HealthcheckData.UNKNOWN "defaultErr", data = [] }) maybeChecks
 
-                dataResult =
-                    healthchecksToData "itemCount" checks
+                        dataResult =
+                            healthchecksToData "itemCount" checks
 
-                floatData =
-                    case dataResult of
-                        Ok data ->
-                            List.map (\( val1, val2 ) -> ( toFloat val1, toFloat val2 )) data
+                        floatData =
+                            case dataResult of
+                                Ok data ->
+                                    List.map (\( val1, val2 ) -> ( toFloat val1, toFloat val2 )) data
 
-                        Err error ->
-                            []
-            in
-            ( { rootModel
-                | healthcheckData = Dict.insert "myKey" healthcheckRoots rootModel.healthcheckData
-                , httpStatus = Success
-                , processedHealthcheckData = Dict.insert "myKey" floatData rootModel.processedHealthcheckData
-              }
-            , Cmd.none
-            )
+                                Err error ->
+                                    []
+                    in
+                    ( { rootModel
+                        | healthcheckData = Dict.insert "myKey" healthcheckRoots rootModel.healthcheckData
+                        , httpStatus = Success
+                        , processedHealthcheckData = Dict.insert "myKey" floatData rootModel.processedHealthcheckData
+                      }
+                    , Cmd.none
+                    )
 
-        Err error ->
-            ( { rootModel | httpStatus = Error error }, Cmd.none )
+                Err error ->
+                    ( { rootModel | httpStatus = Error error }, Cmd.none )
+
+        HealthcheckListItemSelected healthcheckId ->
+            ( { rootModel | selectedHealthcheckId = Just healthcheckId }, Cmd.none )
 
 
 
@@ -104,13 +115,35 @@ update (GotTaskHealthcheckData result) rootModel =
 view : RootModel -> Html.Html Msg
 view rootModel =
     div []
-        [ text (Debug.toString rootModel.processedHealthcheckData)
-        , case Dict.get "myKey" rootModel.processedHealthcheckData of
-            Just data ->
-                viewLineChart data
+        [ viewHealthchecks rootModel.healthchecks
+        , p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
+        , case rootModel.selectedHealthcheckId of
+            Just id ->
+                case Dict.get "myKey" rootModel.processedHealthcheckData of
+                    Just data ->
+                        viewLineChart data
+
+                    Nothing ->
+                        div [] [ text "No data for key 'myKey'" ]
 
             Nothing ->
-                div [] [ text "No data for key 'myKey'" ]
+                div [] [ text "No healthcheck selected yet" ]
+        ]
+
+
+viewHealthchecks : List HealthcheckData.Healthcheck -> Html.Html Msg
+viewHealthchecks healthchecks =
+    div []
+        (List.map
+            (\healthcheck -> viewHealthcheckListItem healthcheck)
+            healthchecks
+        )
+
+
+viewHealthcheckListItem : HealthcheckData.Healthcheck -> Html.Html Msg
+viewHealthcheckListItem healthcheck =
+    div []
+        [ button [ onClick (HealthcheckListItemSelected healthcheck.id) ] [ text healthcheck.name ]
         ]
 
 

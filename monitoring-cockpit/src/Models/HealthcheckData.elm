@@ -1,5 +1,6 @@
 module Models.HealthcheckData exposing
-    ( HealthcheckField
+    ( Healthcheck
+    , HealthcheckField
     , HealthcheckFieldValue(..)
     , HealthcheckNode
     , HealthcheckOutcome(..)
@@ -10,6 +11,13 @@ module Models.HealthcheckData exposing
     )
 
 import Json.Decode as Decode exposing (Decoder, bool, field, int, string)
+
+
+type alias Healthcheck =
+    { id : String
+    , name : String
+    , url : String
+    }
 
 
 type alias HealthcheckRoot =
