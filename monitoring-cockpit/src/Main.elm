@@ -33,10 +33,7 @@ init _ =
       , processedHealthcheckData = Dict.empty
       , httpStatus = Loading
       }
-    , Http.get
-        { url = "http://localhost:3000/mock-monitoring-backend/api/v1/healthchecks/355c722a-4f1c-42fb-a9a3-4fb11f5a0508/data"
-        , expect = Http.expectJson GotTaskHealthcheckData HealthcheckData.healthcheckDataResponseDecoder
-        }
+    , Cmd.batch (requestHealthcheckData [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important" } ])
     )
 
 
@@ -56,7 +53,7 @@ type HttpStatus
 
 
 type Msg
-    = GotTaskHealthcheckData (Result Http.Error (List HealthcheckData.HealthcheckRoot))
+    = GotTaskHealthcheckData String (Result Http.Error (List HealthcheckData.HealthcheckRoot))
     | HealthcheckListItemSelected String
 
 
@@ -72,7 +69,7 @@ subscriptions rootModel =
 update : Msg -> RootModel -> ( RootModel, Cmd Msg )
 update msg rootModel =
     case msg of
-        GotTaskHealthcheckData result ->
+        GotTaskHealthcheckData healthcheckId result ->
             case result of
                 Ok healthcheckRoots ->
                     let
@@ -94,9 +91,9 @@ update msg rootModel =
                                     []
                     in
                     ( { rootModel
-                        | healthcheckData = Dict.insert "myKey" healthcheckRoots rootModel.healthcheckData
+                        | healthcheckData = Dict.insert healthcheckId healthcheckRoots rootModel.healthcheckData
                         , httpStatus = Success
-                        , processedHealthcheckData = Dict.insert "myKey" floatData rootModel.processedHealthcheckData
+                        , processedHealthcheckData = Dict.insert healthcheckId floatData rootModel.processedHealthcheckData
                       }
                     , Cmd.none
                     )
@@ -118,13 +115,13 @@ view rootModel =
         [ viewHealthchecks rootModel.healthchecks
         , p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
         , case rootModel.selectedHealthcheckId of
-            Just id ->
-                case Dict.get "myKey" rootModel.processedHealthcheckData of
+            Just selectedId ->
+                case Dict.get selectedId rootModel.processedHealthcheckData of
                     Just data ->
                         viewLineChart data
 
                     Nothing ->
-                        div [] [ text "No data for key 'myKey'" ]
+                        div [] [ text ("No data for key: " ++ selectedId) ]
 
             Nothing ->
                 div [] [ text "No healthcheck selected yet" ]
@@ -164,6 +161,22 @@ viewLineChart data =
                 data
             ]
         ]
+
+
+
+-- Logic
+
+
+requestHealthcheckData : List HealthcheckData.Healthcheck -> List (Cmd Msg)
+requestHealthcheckData healthchecks =
+    List.map
+        (\healthcheck ->
+            Http.get
+                { url = "http://localhost:3000/mock-monitoring-backend/api/v1/healthchecks/" ++ healthcheck.id ++ "/data"
+                , expect = Http.expectJson (GotTaskHealthcheckData healthcheck.id) HealthcheckData.healthcheckDataResponseDecoder
+                }
+        )
+        healthchecks
 
 
 healthchecksToData : String -> List HealthcheckData.HealthcheckNode -> Result String (List ( Int, Int ))
