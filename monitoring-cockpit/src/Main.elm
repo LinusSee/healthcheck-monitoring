@@ -1,6 +1,7 @@
 module Main exposing (..)
 
 import Browser
+import BusinessLogic.Healthcheck as BLHealthcheck
 import Chart as Chart
 import Chart.Attributes as ChartAttributes
 import Dict exposing (Dict)
@@ -9,6 +10,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Models.HealthcheckData as HealthcheckData
+import Result.Extra as ResultExtra
 import Svg as Svg
 
 
@@ -27,13 +29,20 @@ main =
 
 init : () -> ( RootModel, Cmd Msg )
 init _ =
-    ( { healthchecks = [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important" } ]
+    ( { healthchecks =
+            [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508"
+              , name = "taskdata healthcheck"
+              , url = "not yet important"
+              , chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" } ]
+              }
+            ]
       , selectedHealthcheckId = Nothing
       , healthcheckData = Dict.empty
       , processedHealthcheckData = Dict.empty
+      , healthcheckErrors = Dict.singleton "355c722a-4f1c-42fb-a9a3-4fb11f5a0508" [ "Initial error" ]
       , httpStatus = Loading
       }
-    , Cmd.batch (requestHealthcheckData [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important" } ])
+    , Cmd.batch (requestHealthcheckData [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important", chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" }, { healthcheckName = "IncorrectTasks", fieldname = "noCurrentWorker" } ] } ])
     )
 
 
@@ -41,7 +50,8 @@ type alias RootModel =
     { healthchecks : List HealthcheckData.Healthcheck
     , selectedHealthcheckId : Maybe String
     , healthcheckData : Dict String (List HealthcheckData.HealthcheckRoot)
-    , processedHealthcheckData : Dict String (List ( Float, Float ))
+    , processedHealthcheckData : Dict String (Dict String (List ( Float, Float )))
+    , healthcheckErrors : Dict String (List String)
     , httpStatus : HttpStatus
     }
 
@@ -53,7 +63,7 @@ type HttpStatus
 
 
 type Msg
-    = GotTaskHealthcheckData String (Result Http.Error (List HealthcheckData.HealthcheckRoot))
+    = GotTaskHealthcheckData HealthcheckData.Healthcheck (Result Http.Error (List HealthcheckData.HealthcheckRoot))
     | HealthcheckListItemSelected String
 
 
@@ -69,31 +79,76 @@ subscriptions rootModel =
 update : Msg -> RootModel -> ( RootModel, Cmd Msg )
 update msg rootModel =
     case msg of
-        GotTaskHealthcheckData healthcheckId result ->
+        GotTaskHealthcheckData healthcheck result ->
             case result of
                 Ok healthcheckRoots ->
                     let
-                        maybeChecks =
-                            List.map (\root -> List.head root.checks) healthcheckRoots
+                        -- maybeChecks =
+                        --     List.map (\root -> List.head root.checks) healthcheckRoots
+                        --
+                        -- checks =
+                        --     List.map (Maybe.withDefault { name = "default", state = HealthcheckData.UNKNOWN "defaultErr", data = [] }) maybeChecks
+                        --
+                        -- dataResult =
+                        --     healthchecksToData "itemCount" checks
+                        dataForConfig =
+                            List.map (\config -> ( config, BLHealthcheck.extractValuesForRoots config healthcheckRoots )) healthcheck.chartConfigs
 
-                        checks =
-                            List.map (Maybe.withDefault { name = "default", state = HealthcheckData.UNKNOWN "defaultErr", data = [] }) maybeChecks
+                        dataWithoutErrors =
+                            List.filter (\( _, dataResult ) -> ResultExtra.isOk dataResult) dataForConfig
+                                |> List.map (\( config, okResult ) -> ( config.healthcheckName, Result.withDefault [] okResult ))
 
-                        dataResult =
-                            healthchecksToData "itemCount" checks
+                        mappedData =
+                            List.map
+                                (\( config, values ) ->
+                                    ( config
+                                    , List.indexedMap Tuple.pair values
+                                        |> List.map (\( val1, val2 ) -> ( toFloat val1, val2 ))
+                                    )
+                                )
+                                dataWithoutErrors
 
-                        floatData =
-                            case dataResult of
-                                Ok data ->
-                                    List.map (\( val1, val2 ) -> ( toFloat val1, toFloat val2 )) data
+                        errors =
+                            List.map (\( _, dataResult ) -> dataResult) dataForConfig
+                                |> List.filter ResultExtra.isErr
+                                |> List.map
+                                    (\dataResult ->
+                                        case dataResult of
+                                            Ok _ ->
+                                                "No error."
 
-                                Err error ->
-                                    []
+                                            Err error ->
+                                                error
+                                    )
+
+                        -- healthcheckResult =
+                        --     BLHealthcheck.extractValuesForRoots { healthcheckName = "TaskQueue", fieldname = "itemCount" } healthcheckRoots
+                        -- floatData =
+                        --     case healthcheckResult of
+                        --         Ok data ->
+                        --             List.indexedMap Tuple.pair data
+                        --                 |> List.map (\( val1, val2 ) -> ( toFloat val1, val2 ))
+                        --
+                        --         Err error ->
+                        --             []
+                        -- nodeDataDict =
+                        --     Dict.singleton "TaskQueue" floatData
+                        nodeDataDict =
+                            Dict.fromList mappedData
+
+                        _ =
+                            Debug.log "dataForConfig" (Debug.toString dataForConfig)
+
+                        _ =
+                            Debug.log "nodeDataDict" (Debug.toString nodeDataDict)
+
+                        _ =
+                            Debug.log "Values" (Debug.toString dataWithoutErrors)
                     in
                     ( { rootModel
-                        | healthcheckData = Dict.insert healthcheckId healthcheckRoots rootModel.healthcheckData
+                        | healthcheckData = Dict.insert healthcheck.id healthcheckRoots rootModel.healthcheckData
                         , httpStatus = Success
-                        , processedHealthcheckData = Dict.insert healthcheckId floatData rootModel.processedHealthcheckData
+                        , processedHealthcheckData = Dict.insert healthcheck.id nodeDataDict rootModel.processedHealthcheckData
                       }
                     , Cmd.none
                     )
@@ -118,13 +173,27 @@ view rootModel =
             Just selectedId ->
                 case Dict.get selectedId rootModel.processedHealthcheckData of
                     Just data ->
-                        viewLineChart data
+                        viewLineCharts data
 
+                    -- viewLineChart data
                     Nothing ->
                         div [] [ text ("No data for key: " ++ selectedId) ]
 
             Nothing ->
                 div [] [ text "No healthcheck selected yet" ]
+        , case rootModel.selectedHealthcheckId of
+            Just selectedId ->
+                div []
+                    (case Dict.get selectedId rootModel.healthcheckErrors of
+                        Just errors ->
+                            List.map text errors
+
+                        Nothing ->
+                            [ text "No error present" ]
+                    )
+
+            Nothing ->
+                div [] []
         ]
 
 
@@ -142,6 +211,11 @@ viewHealthcheckListItem healthcheck =
     div []
         [ button [ onClick (HealthcheckListItemSelected healthcheck.id) ] [ text healthcheck.name ]
         ]
+
+
+viewLineCharts : Dict String (List ( Float, Float )) -> Html.Html Msg
+viewLineCharts nodeDataDict =
+    div [] (List.map viewLineChart (Dict.values nodeDataDict))
 
 
 viewLineChart : List ( Float, Float ) -> Html.Html Msg
@@ -173,17 +247,17 @@ requestHealthcheckData healthchecks =
         (\healthcheck ->
             Http.get
                 { url = "http://localhost:3000/mock-monitoring-backend/api/v1/healthchecks/" ++ healthcheck.id ++ "/data"
-                , expect = Http.expectJson (GotTaskHealthcheckData healthcheck.id) HealthcheckData.healthcheckDataResponseDecoder
+                , expect = Http.expectJson (GotTaskHealthcheckData healthcheck) HealthcheckData.healthcheckDataResponseDecoder
                 }
         )
         healthchecks
 
 
 healthchecksToData : String -> List HealthcheckData.HealthcheckNode -> Result String (List ( Int, Int ))
-healthchecksToData fieldName nodes =
+healthchecksToData fieldname nodes =
     let
         healthcheckFieldResults =
-            List.map (healthcheckToData fieldName) nodes
+            List.map (healthcheckToData fieldname) nodes
 
         correctHealthcheckFields =
             List.filter isNotError healthcheckFieldResults
@@ -205,17 +279,17 @@ healthchecksToData fieldName nodes =
 
 
 healthcheckToData : String -> HealthcheckData.HealthcheckNode -> Result String HealthcheckData.HealthcheckField
-healthcheckToData fieldName node =
+healthcheckToData fieldname node =
     let
         maybeHealthcheckField =
-            List.head (List.filter (matchesFieldName fieldName) node.data)
+            List.head (List.filter (matchesFieldName fieldname) node.data)
     in
     case maybeHealthcheckField of
         Just field ->
             Ok field
 
         Nothing ->
-            Err ("No field found matching name: " ++ fieldName)
+            Err ("No field found matching name: " ++ fieldname)
 
 
 isError : Result a b -> Bool

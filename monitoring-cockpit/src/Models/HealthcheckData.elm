@@ -1,5 +1,6 @@
 module Models.HealthcheckData exposing
     ( Healthcheck
+    , HealthcheckChartConfig
     , HealthcheckField
     , HealthcheckFieldValue(..)
     , HealthcheckNode
@@ -17,6 +18,13 @@ type alias Healthcheck =
     { id : String
     , name : String
     , url : String
+    , chartConfigs : List HealthcheckChartConfig
+    }
+
+
+type alias HealthcheckChartConfig =
+    { healthcheckName : String -- Rename to nodeName
+    , fieldname : String
     }
 
 

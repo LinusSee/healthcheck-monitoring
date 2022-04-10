@@ -18,14 +18,14 @@ const tasksHealthcheckData =
                 {
                   "outcome": "UP",
                   "checks": [
-                      // {
-                      //     "name": "IncorrectTasks",
-                      //     "state": "UP",
-                      //     "data": {
-                      //         "noCurrentWorker": 1,
-                      //         "noInboxAssigned": 2
-                      //     }
-                      // },
+                      {
+                          "name": "IncorrectTasks",
+                          "state": "UP",
+                          "data": {
+                              "noCurrentWorker": 1,
+                              "noInboxAssigned": 2
+                          }
+                      },
                       {
                           "name": "TaskQueue",
                           "state": "UP",
@@ -39,14 +39,14 @@ const tasksHealthcheckData =
                 {
                   "outcome": "UP",
                   "checks": [
-                      // {
-                      //     "name": "IncorrectTasks",
-                      //     "state": "UP",
-                      //     "data": {
-                      //         "noCurrentWorker": 4,
-                      //         "noInboxAssigned": 7
-                      //     }
-                      // },
+                      {
+                          "name": "IncorrectTasks",
+                          "state": "UP",
+                          "data": {
+                              "noCurrentWorker": 4,
+                              "noInboxAssigned": 7
+                          }
+                      },
                       {
                           "name": "TaskQueue",
                           "state": "UP",
@@ -59,14 +59,14 @@ const tasksHealthcheckData =
                 {
                   "outcome": "DOWN",
                   "checks": [
-                      // {
-                      //     "name": "IncorrectTasks",
-                      //     "state": "DOWN",
-                      //     "data": {
-                      //         "noCurrentWorker": 11,
-                      //         "noInboxAssigned": 20
-                      //     }
-                      // },
+                      {
+                          "name": "IncorrectTasks",
+                          "state": "DOWN",
+                          "data": {
+                              "noCurrentWorker": 11,
+                              "noInboxAssigned": 20
+                          }
+                      },
                       {
                           "name": "TaskQueue",
                           "state": "UP",
@@ -80,14 +80,14 @@ const tasksHealthcheckData =
                 {
                   "outcome": "UP",
                   "checks": [
-                      // {
-                      //     "name": "IncorrectTasks",
-                      //     "state": "UP",
-                      //     "data": {
-                      //         "noCurrentWorker": 3,
-                      //         "noInboxAssigned": 1
-                      //     }
-                      // },
+                      {
+                          "name": "IncorrectTasks",
+                          "state": "UP",
+                          "data": {
+                              "noCurrentWorker": 3,
+                              "noInboxAssigned": 1
+                          }
+                      },
                       {
                           "name": "TaskQueue",
                           "state": "UP",
@@ -101,14 +101,14 @@ const tasksHealthcheckData =
                 {
                   "outcome": "UP",
                   "checks": [
-                      // {
-                      //     "name": "IncorrectTasks",
-                      //     "state": "UP",
-                      //     "data": {
-                      //         "noCurrentWorker": 9,
-                      //         "noInboxAssigned": 2
-                      //     }
-                      // },
+                      {
+                          "name": "IncorrectTasks",
+                          "state": "UP",
+                          "data": {
+                              "noCurrentWorker": 9,
+                              "noInboxAssigned": 2
+                          }
+                      },
                       {
                           "name": "TaskQueue",
                           "state": "UP",
