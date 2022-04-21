@@ -39,7 +39,7 @@ init _ =
       , selectedHealthcheckId = Nothing
       , healthcheckData = Dict.empty
       , processedHealthcheckData = Dict.empty
-      , healthcheckErrors = Dict.singleton "355c722a-4f1c-42fb-a9a3-4fb11f5a0508" [ "Initial error" ]
+      , healthcheckErrors = Dict.empty
       , httpStatus = Loading
       }
     , Cmd.batch (requestHealthcheckData [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important", chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" }, { healthcheckName = "IncorrectTasks", fieldname = "noCurrentWorker" } ] } ])
@@ -170,6 +170,8 @@ view rootModel =
         [ viewBasicLayout
             (viewHealthchecks rootModel.healthchecks)
             (viewHealthcheckGraphs rootModel)
+        , viewErrors rootModel
+        , p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
         ]
 
 
@@ -199,9 +201,8 @@ viewHealthcheckListItem healthcheck =
 
 viewHealthcheckGraphs : RootModel -> Html.Html Msg
 viewHealthcheckGraphs rootModel =
-    div []
-        [ p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
-        , case rootModel.selectedHealthcheckId of
+    div [ class "healthcheck-charts" ]
+        (case rootModel.selectedHealthcheckId of
             Just selectedId ->
                 case Dict.get selectedId rootModel.processedHealthcheckData of
                     Just data ->
@@ -209,29 +210,33 @@ viewHealthcheckGraphs rootModel =
 
                     -- viewLineChart data
                     Nothing ->
-                        div [] [ text ("No data for key: " ++ selectedId) ]
+                        [ text ("No data for key: " ++ selectedId) ]
 
             Nothing ->
-                div [] [ text "No healthcheck selected yet" ]
-        , case rootModel.selectedHealthcheckId of
-            Just selectedId ->
-                div []
-                    (case Dict.get selectedId rootModel.healthcheckErrors of
-                        Just errors ->
-                            List.map text errors
-
-                        Nothing ->
-                            [ text "No error present" ]
-                    )
-
-            Nothing ->
-                div [] []
-        ]
+                [ text "No healthcheck selected yet" ]
+        )
 
 
-viewLineCharts : Dict String (List ( Float, Float )) -> Html.Html Msg
+viewErrors : RootModel -> Html.Html Msg
+viewErrors rootModel =
+    case rootModel.selectedHealthcheckId of
+        Just selectedId ->
+            div []
+                (case Dict.get selectedId rootModel.healthcheckErrors of
+                    Just errors ->
+                        List.map text errors
+
+                    Nothing ->
+                        [ text "No error present" ]
+                )
+
+        Nothing ->
+            div [] []
+
+
+viewLineCharts : Dict String (List ( Float, Float )) -> List (Html.Html Msg)
 viewLineCharts nodeDataDict =
-    div [] (List.map viewLineChart (Dict.values nodeDataDict))
+    List.map viewLineChart (Dict.values nodeDataDict)
 
 
 viewLineChart : List ( Float, Float ) -> Html.Html Msg
