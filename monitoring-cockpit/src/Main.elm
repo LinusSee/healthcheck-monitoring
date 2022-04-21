@@ -87,7 +87,9 @@ update msg rootModel =
         GotHealthcheckBasedata basedataResult ->
             case basedataResult of
                 Ok basedata ->
-                    ( { rootModel | healthchecks = basedata.healthcheckBasedata }, Cmd.none )
+                    ( { rootModel | healthchecks = basedata.healthcheckBasedata }
+                    , Cmd.batch (requestHealthcheckData basedata.healthcheckBasedata)
+                    )
 
                 Err err ->
                     ( { rootModel | httpStatus = Error err }, Cmd.none )
