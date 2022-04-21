@@ -3,11 +3,21 @@ const tasksHealthcheckId = '355c722a-4f1c-42fb-a9a3-4fb11f5a0508';
 
 const healthchecksBasedata =
   { 'healthcheckBasedata': [{ 'id': routingModelHealthcheckId
+                            , 'name': 'Routing Model'
                             , 'url': 'http://localhost:3001/routingmodel/api/health/application'
+                            , 'chartConfigs': []
                             //, probably config data like which params to use and how to display it
                             },
                             { 'id': tasksHealthcheckId
+                            , 'name': 'Tasks'
                             , 'url': 'http://localhost:3002/tasks/api/health/application'
+                            , 'chartConfigs': [ { 'healthcheckName': 'TaskQueue'
+                                                , 'fieldname': 'itemCount'
+                                                }
+                                              , { 'healthcheckName': 'IncorrectTasks'
+                                                , 'fieldname': 'noCurrentWorker'
+                                                }
+                                              ]
                             //, probably config data like which params to use and how to display it
                             }]
   };

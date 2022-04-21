@@ -1,5 +1,6 @@
 module Models.HealthcheckData exposing
     ( Healthcheck
+    , HealthcheckBasedataResponse
     , HealthcheckChartConfig
     , HealthcheckField
     , HealthcheckFieldValue(..)
@@ -7,11 +8,17 @@ module Models.HealthcheckData exposing
     , HealthcheckOutcome(..)
     , HealthcheckRoot
     , extractNumeric
+    , healthcheckBasedataResponseDecoder
     , healthcheckDataResponseDecoder
     , isNumericField
     )
 
 import Json.Decode as Decode exposing (Decoder, bool, field, int, string)
+
+
+type alias HealthcheckBasedataResponse =
+    { healthcheckBasedata : List Healthcheck
+    }
 
 
 type alias Healthcheck =
@@ -67,6 +74,28 @@ type HealthcheckFieldType
 
 
 -- DECODERS
+
+
+healthcheckBasedataResponseDecoder : Decoder HealthcheckBasedataResponse
+healthcheckBasedataResponseDecoder =
+    Decode.map HealthcheckBasedataResponse
+        (field "healthcheckBasedata" (Decode.list healthcheckDecoder))
+
+
+healthcheckDecoder : Decoder Healthcheck
+healthcheckDecoder =
+    Decode.map4 Healthcheck
+        (field "id" string)
+        (field "name" string)
+        (field "url" string)
+        (field "chartConfigs" (Decode.list healthcheckChartConfigDecoder))
+
+
+healthcheckChartConfigDecoder : Decoder HealthcheckChartConfig
+healthcheckChartConfigDecoder =
+    Decode.map2 HealthcheckChartConfig
+        (field "healthcheckName" string)
+        (field "fieldname" string)
 
 
 healthcheckDataResponseDecoder : Decoder (List HealthcheckRoot)

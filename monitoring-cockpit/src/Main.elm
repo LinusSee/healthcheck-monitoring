@@ -30,11 +30,11 @@ main =
 init : () -> ( RootModel, Cmd Msg )
 init _ =
     ( { healthchecks =
-            [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508"
-              , name = "taskdata healthcheck"
-              , url = "not yet important"
-              , chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" } ]
-              }
+            [-- { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508"
+             --   , name = "taskdata healthcheck"
+             --   , url = "not yet important"
+             --   , chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" } ]
+             --   }
             ]
       , selectedHealthcheckId = Nothing
       , healthcheckData = Dict.empty
@@ -42,7 +42,11 @@ init _ =
       , healthcheckErrors = Dict.empty
       , httpStatus = Loading
       }
-    , Cmd.batch (requestHealthcheckData [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important", chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" }, { healthcheckName = "IncorrectTasks", fieldname = "noCurrentWorker" } ] } ])
+    , Http.get
+        { url = "http://localhost:3000/mock-monitoring-backend/api/v1/healthchecks/"
+        , expect = Http.expectJson GotHealthcheckBasedata HealthcheckData.healthcheckBasedataResponseDecoder
+        }
+      -- , Cmd.batch (requestHealthcheckData [ { id = "355c722a-4f1c-42fb-a9a3-4fb11f5a0508", name = "taskdata healthcheck", url = "not yet important", chartConfigs = [ { healthcheckName = "TaskQueue", fieldname = "itemCount" }, { healthcheckName = "IncorrectTasks", fieldname = "noCurrentWorker" } ] } ])
     )
 
 
@@ -65,6 +69,7 @@ type HttpStatus
 type Msg
     = GotTaskHealthcheckData HealthcheckData.Healthcheck (Result Http.Error (List HealthcheckData.HealthcheckRoot))
     | HealthcheckListItemSelected String
+    | GotHealthcheckBasedata (Result Http.Error HealthcheckData.HealthcheckBasedataResponse)
 
 
 subscriptions : RootModel -> Sub Msg
@@ -79,6 +84,14 @@ subscriptions rootModel =
 update : Msg -> RootModel -> ( RootModel, Cmd Msg )
 update msg rootModel =
     case msg of
+        GotHealthcheckBasedata basedataResult ->
+            case basedataResult of
+                Ok basedata ->
+                    ( { rootModel | healthchecks = basedata.healthcheckBasedata }, Cmd.none )
+
+                Err err ->
+                    ( { rootModel | httpStatus = Error err }, Cmd.none )
+
         GotTaskHealthcheckData healthcheck result ->
             case result of
                 Ok healthcheckRoots ->
@@ -172,6 +185,7 @@ view rootModel =
             (viewHealthcheckGraphs rootModel)
         , viewErrors rootModel
         , p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
+        , text (Debug.toString rootModel.httpStatus)
         ]
 
 
