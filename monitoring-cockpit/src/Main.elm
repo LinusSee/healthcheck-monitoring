@@ -167,8 +167,40 @@ update msg rootModel =
 view : RootModel -> Html.Html Msg
 view rootModel =
     div []
-        [ viewHealthchecks rootModel.healthchecks
-        , p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
+        [ viewBasicLayout
+            (viewHealthchecks rootModel.healthchecks)
+            (viewHealthcheckGraphs rootModel)
+        ]
+
+
+viewBasicLayout : Html.Html Msg -> Html.Html Msg -> Html.Html Msg
+viewBasicLayout sidebar content =
+    div [ class "page" ]
+        [ div [ class "page__healthcheck-sidebar" ] [ sidebar ]
+        , div [ class "page__healthcheck-content" ] [ content ]
+        ]
+
+
+viewHealthchecks : List HealthcheckData.Healthcheck -> Html.Html Msg
+viewHealthchecks healthchecks =
+    div []
+        (List.map
+            (\healthcheck -> viewHealthcheckListItem healthcheck)
+            healthchecks
+        )
+
+
+viewHealthcheckListItem : HealthcheckData.Healthcheck -> Html.Html Msg
+viewHealthcheckListItem healthcheck =
+    div []
+        [ button [ onClick (HealthcheckListItemSelected healthcheck.id) ] [ text healthcheck.name ]
+        ]
+
+
+viewHealthcheckGraphs : RootModel -> Html.Html Msg
+viewHealthcheckGraphs rootModel =
+    div []
+        [ p [] [ text (Debug.toString rootModel.processedHealthcheckData) ]
         , case rootModel.selectedHealthcheckId of
             Just selectedId ->
                 case Dict.get selectedId rootModel.processedHealthcheckData of
@@ -194,22 +226,6 @@ view rootModel =
 
             Nothing ->
                 div [] []
-        ]
-
-
-viewHealthchecks : List HealthcheckData.Healthcheck -> Html.Html Msg
-viewHealthchecks healthchecks =
-    div []
-        (List.map
-            (\healthcheck -> viewHealthcheckListItem healthcheck)
-            healthchecks
-        )
-
-
-viewHealthcheckListItem : HealthcheckData.Healthcheck -> Html.Html Msg
-viewHealthcheckListItem healthcheck =
-    div []
-        [ button [ onClick (HealthcheckListItemSelected healthcheck.id) ] [ text healthcheck.name ]
         ]
 
 

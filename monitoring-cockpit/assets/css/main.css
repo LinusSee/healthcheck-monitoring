@@ -6,7 +6,21 @@ html, body {
   margin: 0px;
 }
 
+/*
+  Basic page (grid) layout
+*/
+.page {
+  display: grid;
+  grid-template-columns: 20% 80%;
+}
 
+.page__healthcheck-sidebar {
+
+}
+
+.page__healthcheck-content {
+
+}
 
 /*
 Styles
