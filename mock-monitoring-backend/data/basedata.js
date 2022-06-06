@@ -22,7 +22,36 @@ const healthchecksBasedata =
                             }]
   };
 
+function nextTaskHealthcheckData() {
+  const noCurrentWorker = Math.floor(Math.random() * 20);
+  const noInboxAssigned = Math.floor(Math.random() * 15);
+  const itemCount = Math.floor(Math.random() * 10);
 
+  const nextData =
+              {
+                "outcome": "UP",
+                "checks": [
+                    {
+                        "name": "IncorrectTasks",
+                        "state": "UP",
+                        "data": {
+                            "noCurrentWorker": noCurrentWorker,
+                            "noInboxAssigned": noInboxAssigned
+                        }
+                    },
+                    {
+                        "name": "TaskQueue",
+                        "state": "UP",
+                        "data": {
+                            "itemCount": itemCount,
+                            "boolField": true
+                        }
+                    }
+                ]
+              };
+
+    return nextData;
+}
 const tasksHealthcheckData =
   { 'healthcheckResponse': [
                 {
@@ -137,4 +166,4 @@ const healthcheckData = {};
 healthcheckData[tasksHealthcheckId] = tasksHealthcheckData
 
 
-export { healthchecksBasedata, healthcheckData };
+export { tasksHealthcheckId, healthchecksBasedata, healthcheckData, nextTaskHealthcheckData };

@@ -98,14 +98,6 @@ update msg rootModel =
             case result of
                 Ok healthcheckRoots ->
                     let
-                        -- maybeChecks =
-                        --     List.map (\root -> List.head root.checks) healthcheckRoots
-                        --
-                        -- checks =
-                        --     List.map (Maybe.withDefault { name = "default", state = HealthcheckData.UNKNOWN "defaultErr", data = [] }) maybeChecks
-                        --
-                        -- dataResult =
-                        --     healthchecksToData "itemCount" checks
                         dataForConfig =
                             List.map (\config -> ( config, BLHealthcheck.extractValuesForRoots config healthcheckRoots )) healthcheck.chartConfigs
 
